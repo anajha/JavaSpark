@@ -1,9 +1,7 @@
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf25.DescriptorProtos;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -17,11 +15,11 @@ public class SparkDemo {
 
     public static void main(String... args) {
 
-        System.setProperty("hadoop.home.dir", "C://Hadoop");
+        //System.setProperty("hadoop.home.dir", "C://Hadoop");
 
         HashMap<String, Object> objectMap = new HashMap<>();
 
-        ObjectMapper jsonOutput =new ObjectMapper();
+        ObjectMapper jsonOutput=new ObjectMapper();
 
         PublisherExample publisherExample=new PublisherExample();
 
@@ -43,8 +41,9 @@ public class SparkDemo {
             {
                 objectMap.put(fieldNames.get(i),row.get(i));
             }
-
-            publisherExample.publishMessages(jsonOutput.writeValueAsString(objectMap));
+             String output=jsonOutput.writeValueAsString(objectMap);
+             System.out.println(output);
+             publisherExample.publishMessages(jsonOutput.writeValueAsString(objectMap));
         });
     }
 }
