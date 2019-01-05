@@ -1,3 +1,5 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf25.DescriptorProtos;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
@@ -7,9 +9,21 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
 public class SparkDemo {
 
-    public static void main(String...args){
+    public static void main(String... args) {
+
+        System.setProperty("hadoop.home.dir", "C://Hadoop");
+
+        HashMap<String, Object> objectMap = new HashMap<>();
+
+        ObjectMapper jsonOutput =new ObjectMapper();
+
+        PublisherExample publisherExample=new PublisherExample();
 
         Logger.getLogger("org.apache").setLevel(Level.WARN);
 
@@ -19,20 +33,18 @@ public class SparkDemo {
                 .appName("Java Spark example")
                 .getOrCreate();
 
-        Dataset<Row> peopleDF = spark.read().json("dummydata.json");
+        Dataset<Row> parquetFileDF = spark.read().parquet("userdata1.parquet");
 
-        // DataFrames can be saved as Parquet files, maintaining the schema information
-        peopleDF.write().parquet("people.parquet");
+        List<String> fieldNames = Arrays.asList(parquetFileDF.schema().fieldNames());
 
-        // Read in the Parquet file created above.
-        // Parquet files are self-describing so the schema is preserved
-        // The result of loading a parquet file is also a DataFrame
-        Dataset<Row> parquetFileDF = spark.read().parquet("dummyfile.parquet");
+        parquetFileDF.foreach((ForeachFunction<Row>) row -> {
 
-        // Parquet files can also be used to create a temporary view and then used in SQL statements
-        parquetFileDF.createOrReplaceTempView("parquetFile");
-        Dataset<Row> namesDF = spark.sql("SELECT * from parquetFile");
+            for(int i=0;i<fieldNames.size();i++)
+            {
+                objectMap.put(fieldNames.get(i),row.get(i));
+            }
 
-        namesDF.foreach((ForeachFunction<Row>) row->System.out.println(row));
+            publisherExample.publishMessages(jsonOutput.writeValueAsString(objectMap));
+        });
     }
 }
